@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="SignalScope turns public data into plain-language explanations of what is happening around a topic.">
+<title>SignalScope — Understand What’s Happening Around a Topic</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#ffffff;--ink:#172033;--muted:#687386;--line:#dfe5ee;
+  --brand:#335cff;--brand2:#7c4dff;--good:#168a4f;--warn:#b97600;--bad:#c53b4d;
+  --soft:#eef2ff;--shadow:0 12px 34px rgba(28,45,82,.08);--r:18px
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,#f8faff 0,#f4f7fb 220px,#f5f7fb 100%);color:var(--ink);
+ font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}a{color:var(--brand);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:1380px;margin:auto;padding:22px}
+.topbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:18px}
+.brandmark{font-weight:900;font-size:20px}.smalltag{font-size:12px;color:var(--muted)}
+.hero{background:linear-gradient(135deg,#ffffff,#f5f6ff);border:1px solid var(--line);border-radius:24px;padding:26px;box-shadow:var(--shadow);margin-bottom:18px}
+.hero h1{margin:0 0 8px;font-size:clamp(30px,4vw,48px);line-height:1.05;letter-spacing:-.035em}
+.hero p{margin:0;color:var(--muted);font-size:17px;max-width:900px}
+.searchrow{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:20px}
+@media(max-width:700px){.searchrow{grid-template-columns:1fr}}
+input[type=text],textarea,select{width:100%;border:1px solid #cfd7e4;background:white;color:var(--ink);border-radius:13px;padding:12px 13px;outline:none}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(51,92,255,.10)}
+.btn{border:1px solid #ccd4e2;border-radius:13px;padding:11px 14px;background:white;color:var(--ink);font-weight:800}
+.btn.primary{border-color:transparent;background:linear-gradient(135deg,var(--brand),var(--brand2));color:white}
+.btn.ghost{background:transparent}.btn.small{padding:8px 10px;font-size:12px}
+.examples{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.example{border:1px solid #d4dbea;background:#fff;color:#4b5770;border-radius:999px;padding:6px 9px;font-size:12px}
+.app{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px}
+@media(max-width:980px){.app{grid-template-columns:1fr}}
+.sidebar,.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.sidebar{padding:16px;align-self:start}.stack{display:grid;gap:13px}
+.sectionTitle{font-weight:900;font-size:14px;margin-bottom:4px}.hint{font-size:12px;color:var(--muted)}
+label.field{display:grid;gap:6px;font-size:12px;font-weight:800;color:#49566b}
+.sources{display:grid;gap:7px}.sourceToggle{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 9px;border:1px solid var(--line);border-radius:11px;background:#fafbfe}
+.sourceToggle label{font-size:12px;font-weight:750}.sourceToggle input{accent-color:var(--brand)}
+.sliderHead{display:flex;justify-content:space-between;font-size:12px;font-weight:800;color:#4f5a6c}input[type=range]{width:100%;accent-color:var(--brand)}
+.guard{font-size:11px;color:#6f7887;background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px}
+.content{min-width:0}.card{padding:18px;margin-bottom:14px}.card h2,.card h3{margin:0}.card h2{font-size:20px}.card h3{font-size:15px}
+.summary{background:linear-gradient(135deg,#eef3ff,#f7f1ff);border-color:#d6dcff}
+.summaryGrid{display:grid;grid-template-columns:1.3fr .7fr;gap:18px}
+@media(max-width:760px){.summaryGrid{grid-template-columns:1fr}}
+.bigHeadline{font-size:28px;line-height:1.12;font-weight:950;letter-spacing:-.025em;margin:8px 0}
+.plain{color:#4e5b70;font-size:15px}.confidence{border-left:3px solid var(--brand);padding-left:12px;color:#536078;font-size:13px}
+.signalGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:900px){.signalGrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.signalGrid{grid-template-columns:1fr}}
+.signal{border:1px solid var(--line);border-radius:15px;padding:14px;background:#fff}.signal .label{font-size:11px;color:var(--muted);font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.signal .level{font-size:24px;font-weight:950;margin:4px 0}.signal .why{font-size:11px;color:#677387}.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.track{height:8px;background:#edf1f7;border-radius:999px;overflow:hidden;margin-top:8px}.fill{height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));border-radius:999px}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:12px}
+@media(max-width:950px){.kpis{grid-template-columns:repeat(3,1fr)}}@media(max-width:540px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{border:1px solid var(--line);border-radius:13px;padding:10px;background:#fbfcff}.kpi .n{font-size:19px;font-weight:900}.kpi .t{font-size:10px;color:var(--muted)}
+.implications{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:850px){.implications{grid-template-columns:1fr}}
+.imp{border:1px solid var(--line);border-radius:14px;padding:13px;background:#fcfdff}.imp .title{font-weight:900;margin-bottom:4px}.imp .body{font-size:12px;color:#657185}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);overflow:auto}.tab{background:transparent;border:0;padding:10px 11px;color:#768197;font-weight:850;white-space:nowrap;border-bottom:2px solid transparent}.tab.active{color:var(--brand);border-color:var(--brand)}
+.pane{display:none;padding-top:12px}.pane.active{display:block}
+.evidenceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}@media(max-width:760px){.evidenceGrid{grid-template-columns:1fr}}
+.ev{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff;display:grid;gap:7px}.evtop{display:flex;justify-content:space-between;gap:8px}.sourcepill{font-size:10px;font-weight:900;background:#f2f5fa;border-radius:999px;padding:4px 7px;color:#536078}.evtitle{font-size:13px;font-weight:900;line-height:1.35}.meta{font-size:10px;color:#7d8798}.why{font-size:11px;color:#5d6879}.feedback{display:flex;gap:5px}.iconbtn{border:1px solid #d4dbe6;background:#fafbfe;border-radius:8px;padding:5px 7px;font-size:10px}.iconbtn.active{border-color:var(--brand);color:var(--brand)}
+.graphWrap{height:390px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fbfcff}svg{width:100%;height:100%}.edge{stroke:#ced6e2;stroke-width:1.2}.edge.hot{stroke:#9eaaff;stroke-width:2}
+.node{cursor:pointer}.node circle{fill:#fff;stroke:#aeb9ca;stroke-width:1.3}.node.root circle{fill:#eef2ff;stroke:var(--brand);stroke-width:2.5}.node.active circle{stroke:var(--warn);stroke-width:3}.node text{fill:#2c3748;font-size:10px;font-weight:850;pointer-events:none}.node .minor{fill:#7c8798;font-size:8px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.chip{border:1px solid #d2d9e5;background:#fff;color:#566276;border-radius:999px;padding:6px 8px;font-size:10px}.chip.active{border-color:var(--warn);color:#8a5d00}
+table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#7d8797}td{color:#4e5a6d}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 11px;background:#fafbfe}summary{font-weight:900;cursor:pointer}.empty{border:1px dashed #cdd5e2;border-radius:14px;padding:22px;text-align:center;color:#7f899a}
+.statusbar{display:flex;gap:6px;flex-wrap:wrap}.status{border:1px solid #d5dde9;border-radius:999px;padding:4px 7px;font-size:9px;color:#687488;background:#fafbfe}.status.live{color:var(--good)}.status.fail{color:var(--bad)}.status.load{color:var(--warn)}
+.progress{height:3px;background:#edf1f7;border-radius:999px;overflow:hidden}.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:width .2s}
+.notice{background:#fff8e8;border:1px solid #f2dfb4;color:#72540c;padding:10px 12px;border-radius:12px;font-size:11px}
+.footer{font-size:10px;color:#7e8999;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div><div class="brandmark">SignalScope</div><div class="smalltag">Understand what’s happening around a topic — using public data</div></div>
+    <div class="smalltag">Patent-derived research prototype</div>
+  </div>
+
+  <section class="hero">
+    <h1>What are you trying to understand?</h1>
+    <p>Search a topic, company, technology, or public issue. SignalScope looks across public conversation, news, research, software activity, government awards, and other open sources — then explains what the pattern means in plain language.</p>
+    <div class="searchrow">
+      <input id="topic" type="text" value="small modular reactors" placeholder="Try: small modular reactors, GLP-1, AI agents, quantum computing">
+      <button id="runTop" class="btn primary">Analyze this topic</button>
+    </div>
+    <div class="examples">
+      <button class="example" data-topic="small modular reactors" data-entity="NuScale">Small modular reactors</button>
+      <button class="example" data-topic="GLP-1" data-entity="Eli Lilly">GLP-1 drugs</button>
+      <button class="example" data-topic="artificial intelligence agents" data-entity="Microsoft">AI agents</button>
+      <button class="example" data-topic="direct air capture" data-entity="">Direct air capture</button>
+      <button class="example" data-topic="quantum computing" data-entity="IonQ">Quantum computing</button>
+    </div>
+  </section>
+
+  <div class="app">
+    <aside class="sidebar">
+      <div class="stack">
+        <div>
+          <div class="sectionTitle">Optional details</div>
+          <div class="hint">These help SignalScope narrow the results. You can leave them blank.</div>
+        </div>
+        <label class="field">Company or organization
+          <input id="entity" type="text" value="NuScale" placeholder="e.g. OpenAI, Pfizer, Tesla">
+        </label>
+        <label class="field">Place
+          <input id="place" type="text" placeholder="e.g. Idaho, Virginia, Phoenix">
+        </label>
+        <label class="field">What do you want to know?
+          <textarea id="question" placeholder="e.g. Is attention increasing before government action?"></textarea>
+        </label>
+
+        <div>
+          <div class="sectionTitle">What should matter more?</div>
+          <div class="hint">You don’t need to understand the data sources to use these.</div>
+        </div>
+        <div><div class="sliderHead"><span>Recent activity</span><span id="freshVal">75%</span></div><input id="fresh" type="range" min="0" max="100" value="75"></div>
+        <div><div class="sliderHead"><span>Official / expert evidence</span><span id="instVal">70%</span></div><input id="inst" type="range" min="0" max="100" value="70"></div>
+        <div><div class="sliderHead"><span>Public conversation</span><span id="socialVal">55%</span></div><input id="social" type="range" min="0" max="100" value="55"></div>
+
+        <details>
+          <summary>Choose data sources</summary>
+          <div class="sources" style="margin-top:9px">
+            <div class="sourceToggle"><label for="useBsky">Bluesky public posts</label><input id="useBsky" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useWiki">Wikipedia interest</label><input id="useWiki" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useGdelt">News coverage</label><input id="useGdelt" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useOpenAlex">Academic research</label><input id="useOpenAlex" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useGithub">GitHub projects</label><input id="useGithub" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useTrials">Clinical trials</label><input id="useTrials" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useSpend">Federal awards</label><input id="useSpend" type="checkbox" checked></div>
+            <div class="sourceToggle"><label for="useFec">FEC candidates</label><input id="useFec" type="checkbox" checked></div>
+          </div>
+        </details>
+
+        <button id="run" class="btn primary">Run analysis</button>
+        <div class="progress"><div id="progress"></div></div>
+        <div class="statusbar" id="statuses"></div>
+        <div class="guard">SignalScope uses public data. It does not build personal profiles from voter files, addresses, or private records.</div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="card summary">
+        <div class="summaryGrid">
+          <div>
+            <div class="hint">Plain-English takeaway</div>
+            <div class="bigHeadline" id="headline">Run the topic to get a simple explanation.</div>
+            <div class="plain" id="summaryText">SignalScope will tell you what appears to be happening, what evidence supports that conclusion, and what you should look at next.</div>
+          </div>
+          <div class="confidence">
+            <strong id="confidenceTitle">Evidence strength: —</strong>
+            <div id="confidenceText" style="margin-top:4px">This is not a probability score. It reflects how many independent kinds of public evidence point in the same direction.</div>
+          </div>
+        </div>
+
+        <div class="signalGrid" style="margin-top:16px">
+          <div class="signal"><div class="label">People are talking</div><div class="level" id="levelSocial">—</div><div class="why" id="whySocial">Public social activity</div><div class="track"><div class="fill" id="barSocial" style="width:0%"></div></div></div>
+          <div class="signal"><div class="label">People are looking it up</div><div class="level" id="levelPublic">—</div><div class="why" id="whyPublic">Wikipedia attention</div><div class="track"><div class="fill" id="barPublic" style="width:0%"></div></div></div>
+          <div class="signal"><div class="label">Media is covering it</div><div class="level" id="levelNews">—</div><div class="why" id="whyNews">Recent news coverage</div><div class="track"><div class="fill" id="barNews" style="width:0%"></div></div></div>
+          <div class="signal"><div class="label">Experts / institutions are acting</div><div class="level" id="levelInstitution">—</div><div class="why" id="whyInstitution">Research, projects, trials, and public awards</div><div class="track"><div class="fill" id="barInstitution" style="width:0%"></div></div></div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="n" id="mBsky">—</div><div class="t">public posts returned</div></div>
+          <div class="kpi"><div class="n" id="mWiki">—</div><div class="t">Wikipedia views · 30d</div></div>
+          <div class="kpi"><div class="n" id="mNews">—</div><div class="t">recent news results</div></div>
+          <div class="kpi"><div class="n" id="mOA">—</div><div class="t">recent research works</div></div>
+          <div class="kpi"><div class="n" id="mGH">—</div><div class="t">GitHub repository matches</div></div>
+          <div class="kpi"><div class="n" id="mInst">—</div><div class="t">trials + awards + FEC hits</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>What this may mean</h2>
+        <div class="hint" style="margin-bottom:10px">These are cautious interpretations of the pattern, not predictions.</div>
+        <div class="implications">
+          <div class="imp"><div class="title" id="imp1Title">Waiting for data</div><div class="body" id="imp1Body">The first implication will appear here.</div></div>
+          <div class="imp"><div class="title" id="imp2Title">What to watch next</div><div class="body" id="imp2Body">SignalScope will suggest the most useful next evidence to inspect.</div></div>
+          <div class="imp"><div class="title" id="imp3Title">Don’t overread it</div><div class="body" id="imp3Body">Different sources measure different things. SignalScope keeps those distinctions visible.</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="tabs">
+          <button class="tab active" data-pane="evidence">Best evidence</button>
+          <button class="tab" data-pane="connections">Explore connections</button>
+          <button class="tab" data-pane="sources">Where this comes from</button>
+          <button class="tab" data-pane="technical">Technical / patent view</button>
+        </div>
+
+        <div class="pane active" id="evidence">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px">
+            <div><h3>Best evidence to look at</h3><div class="hint">These are the actual public records, posts, papers, pages, and awards behind the summary.</div></div>
+            <select id="filter" style="width:auto"><option value="all">All sources</option><option>Bluesky</option><option>Wikipedia</option><option>GDELT</option><option>OpenAlex</option><option>GitHub</option><option>ClinicalTrials.gov</option><option>USAspending</option><option>FEC</option></select>
+          </div>
+          <div id="evidenceGrid" class="evidenceGrid"><div class="empty">No results yet.</div></div>
+        </div>
+
+        <div class="pane" id="connections">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px">
+            <div><h3>What ideas keep appearing together?</h3><div class="hint">Bigger nodes appear in more sources. Click a node to filter the evidence around it.</div></div>
+            <span class="hint" id="nodeCount"></span>
+          </div>
+          <div class="graphWrap"><svg id="graph" viewBox="0 0 720 390"></svg></div>
+          <div class="chips" id="chips"></div>
+        </div>
+
+        <div class="pane" id="sources">
+          <div class="notice">A “high” signal does not mean the same thing across sources. 30 social posts, 30 academic papers, and 30 government awards are fundamentally different observations.</div>
+          <div style="overflow:auto;margin-top:10px">
+            <table><thead><tr><th>Source</th><th>What we observed</th><th>What that tells you</th><th>What it does NOT tell you</th><th>Status</th></tr></thead><tbody id="ledgerRows"></tbody></table>
+          </div>
+        </div>
+
+        <div class="pane" id="technical">
+          <details open><summary>How this relates to the patent</summary>
+            <p class="hint">The patent describes a system that infers a person’s current focus, finds matching topic nodes in a changing hierarchy, points those nodes to relevant destinations, and updates matching based on preferences and behavior. SignalScope translates that mechanism into public-data research: the topic you enter is the current focus; recurring ideas become topic nodes; actual public records and pages become destinations; your weighting and feedback change ranking; repeated runs show which nodes are emerging or fading.</p>
+          </details>
+          <details style="margin-top:8px"><summary>What is implemented vs. modeled</summary>
+            <p class="hint"><strong>Implemented:</strong> live multi-source search, topic extraction, ranking, source-family support, feedback-based reranking, and repeated-run node comparison. <strong>Modeled:</strong> “emerging/fading” is based on changes between your local snapshots, not a globally validated trend model. <strong>Not implemented:</strong> private profiling, biometric inference, or person-level voter-file enrichment.</p>
+          </details>
+        </div>
+      </section>
+
+      <div class="footer" id="stamp">No analysis run yet.</div>
+    </main>
+  </div>
+</div>
+
+<script>
+const S={raw:{},items:[],nodes:[],selected:null,errors:{},feedback:JSON.parse(localStorage.getItem("signalscope_feedback_plain")||"{}")};
+const stop=new Set(("the and for with from into about after before this that these those your our their have has had are was were will would could should may might can not but all any some more most new latest today study studies report reports research researchers says said use used using via over under between within during through where when what which who why how its than then also only such".split(/\s+/)));
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const fmt=n=>n==null||Number.isNaN(+n)?"—":+n>=1e9?(+n/1e9).toFixed(1)+"B":+n>=1e6?(+n/1e6).toFixed(1)+"M":+n>=1e3?(+n/1e3).toFixed(1)+"K":Math.round(+n).toString();
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const words=s=>String(s||"").toLowerCase().replace(/https?:\/\/\S+/g," ").replace(/[^a-z0-9+\- ]/g," ").split(/\s+/).filter(x=>x.length>2&&!stop.has(x)&&!/^\d+$/.test(x));
+const day=n=>new Date(Date.now()-n*86400000).toISOString().slice(0,10);
+const wikiDay=n=>day(n).replaceAll("-","");
+function focusText(){return [$("topic").value,$("entity").value,$("place").value,$("question").value].filter(Boolean).join(" ")}
+function setStatus(k,kind,text){let e=document.querySelector(`[data-st="${k}"]`);if(!e){e=document.createElement("span");e.dataset.st=k;$("statuses").appendChild(e)}e.className="status "+kind;e.textContent=text}
+function prog(v){$("progress").style.width=v+"%"}
+function jsonp(url){
+ return new Promise((resolve,reject)=>{
+  const cb="ss_"+Math.random().toString(36).slice(2),s=document.createElement("script"),timer=setTimeout(()=>done(new Error("timeout")),14000);
+  function done(err,data){clearTimeout(timer);delete window[cb];s.remove();err?reject(err):resolve(data)}
+  window[cb]=d=>done(null,d);s.onerror=()=>done(new Error("jsonp"));s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;document.head.appendChild(s)
+ })
+}
+function addItem(source,title,url,meta,text,ts,weight=1,extra={}){
+ S.items.push({_id:String(S.items.length+1),source,title:title||"Untitled",url:url||"#",meta:meta||"",text:text||title||"",tokens:words((title||"")+" "+(text||"")),ts:ts||new Date().toISOString(),weight,extra})
+}
+async function bluesky(q){
+ setStatus("bsky","load","Bluesky …");
+ const j=await fetch("https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts?q="+encodeURIComponent(q)+"&limit=45").then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ const p=j.posts||[];p.forEach(x=>{const key=(x.uri||"").split("/").pop(),h=x.author?.handle||"";addItem("Bluesky",(x.record?.text||"").slice(0,180),h&&key?`https://bsky.app/profile/${encodeURIComponent(h)}/post/${key}`:"#",`@${h} · ${x.likeCount||0} likes · ${x.replyCount||0} replies`,x.record?.text||"",x.indexedAt,1+Math.log1p((x.likeCount||0)+(x.replyCount||0)+(x.repostCount||0)),x)});
+ setStatus("bsky","live","Bluesky ✓");return {count:p.length}
+}
+async function wiki(q){
+ setStatus("wiki","load","Wikipedia …");
+ const sj=await fetch("https://en.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*&srsearch="+encodeURIComponent(q)).then(r=>r.json());
+ const hit=sj?.query?.search?.[0];if(!hit)throw Error("no article");
+ const title=hit.title,enc=encodeURIComponent(title.replace(/ /g,"_"));
+ const pj=await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article/en.wikipedia.org/all-access/user/${enc}/daily/${wikiDay(60)}/${wikiDay(1)}`).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ const arr=pj.items||[],last=arr.slice(-30).reduce((a,x)=>a+(x.views||0),0),prior=arr.slice(-60,-30).reduce((a,x)=>a+(x.views||0),0);
+ addItem("Wikipedia",title,`https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g,"_"))}`,`${fmt(last)} views in the last 30 days`,hit.snippet||title,new Date().toISOString(),Math.log1p(last),{last,prior});
+ setStatus("wiki","live","Wikipedia ✓");return {views:last,prior}
+}
+async function gdelt(q){
+ setStatus("gdelt","load","News …");
+ const j=await jsonp("https://api.gdeltproject.org/api/v2/doc/doc?query="+encodeURIComponent('"'+q+'"')+"&mode=artlist&maxrecords=45&timespan=7d&format=jsonp");
+ const a=j.articles||j.items||[];a.forEach(x=>addItem("GDELT",x.title,x.url||x.link,[x.domain,x.sourcecountry,x.seendate].filter(Boolean).join(" · "),x.title,x.seendate,1.6,x));
+ setStatus("gdelt","live","News ✓");return {count:a.length}
+}
+async function openalex(q){
+ setStatus("oa","load","Research …");const y=new Date().getUTCFullYear();
+ const j=await fetch(`https://api.openalex.org/works?search=${encodeURIComponent(q)}&filter=from_publication_date:${y-1}-01-01&sort=cited_by_count:desc&per_page=35`).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ (j.results||[]).forEach(w=>{const loc=w.primary_location||{},src=loc.source||{},topics=(w.topics||[]).slice(0,4).map(t=>t.display_name).join(" ");addItem("OpenAlex",w.title,loc.landing_page_url||w.doi||w.id,`${w.publication_year||""} · ${w.cited_by_count||0} citations${src.display_name?" · "+src.display_name:""}`,w.title+" "+topics,w.publication_date,2+Math.log1p(w.cited_by_count||0),w)});
+ setStatus("oa","live","Research ✓");return {count:j.meta?.count??(j.results||[]).length}
+}
+async function github(q){
+ setStatus("gh","load","GitHub …");
+ const j=await fetch("https://api.github.com/search/repositories?q="+encodeURIComponent(q)+"&sort=updated&order=desc&per_page=30",{headers:{"Accept":"application/vnd.github+json"}}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ (j.items||[]).forEach(x=>addItem("GitHub",x.full_name,x.html_url,`${x.stargazers_count||0} stars · ${x.language||"language n/a"} · updated ${String(x.updated_at||"").slice(0,10)}`,x.description||x.full_name,x.updated_at,1.5+Math.log1p(x.stargazers_count||0),x));
+ setStatus("gh","live","GitHub ✓");return {count:j.total_count??(j.items||[]).length}
+}
+async function trials(q){
+ setStatus("ct","load","Trials …");
+ const j=await fetch("https://clinicaltrials.gov/api/v2/studies?format=json&pageSize=30&countTotal=true&query.term="+encodeURIComponent(q)).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ (j.studies||[]).forEach(s=>{const p=s.protocolSection||{},id=p.identificationModule||{},st=p.statusModule||{},des=p.descriptionModule||{};addItem("ClinicalTrials.gov",id.briefTitle||id.officialTitle||id.nctId,`https://clinicaltrials.gov/study/${id.nctId}`,`${id.nctId||""} · ${st.overallStatus||"status n/a"}`,`${id.briefTitle||""} ${des.briefSummary||""}`,st.studyFirstPostDateStruct?.date,2,s)});
+ setStatus("ct","live","Trials ✓");return {count:j.totalCount??(j.studies||[]).length}
+}
+async function spending(q){
+ setStatus("sp","load","Awards …");
+ const codes=["A","B","C","D","02","03","04","05","06","07","08","09","10","11","IDV_A","IDV_B","IDV_B_A","IDV_B_B","IDV_B_C","IDV_C","IDV_D","IDV_E"];
+ const body={subawards:false,limit:25,page:1,filters:{keywords:[q],award_type_codes:codes,time_period:[{start_date:day(730),end_date:day(0)}]},fields:["Award ID","Recipient Name","Start Date","End Date","Award Amount","Awarding Agency","Award Type"],sort:"Award Amount",order:"desc"};
+ const j=await fetch("https://api.usaspending.gov/api/v2/search/spending_by_award/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ (j.results||[]).forEach(x=>addItem("USAspending",`${x["Recipient Name"]||"Recipient"} — ${x["Award ID"]||"award"}`,"https://www.usaspending.gov/search",`${fmt(x["Award Amount"])} · ${x["Awarding Agency"]||""}`,`${x["Recipient Name"]||""} ${x["Awarding Agency"]||""}`,x["Start Date"],2+Math.log1p(Math.abs(+x["Award Amount"]||0))/4,x));
+ setStatus("sp","live","Awards ✓");return {count:(j.results||[]).length}
+}
+async function fec(entity){
+ setStatus("fec","load","FEC …");if(!entity.trim()){setStatus("fec","fail","FEC skipped");return {count:0}}
+ const j=await fetch("https://api.open.fec.gov/v1/candidates/search/?api_key=DEMO_KEY&per_page=15&q="+encodeURIComponent(entity)).then(r=>{if(!r.ok)throw Error(r.status);return r.json()});
+ (j.results||[]).forEach(x=>addItem("FEC",`${x.name||"Candidate"} (${x.candidate_id||""})`,`https://www.fec.gov/data/candidate/${x.candidate_id}/`,`office ${x.office_full||x.office||"n/a"} · party ${x.party_full||x.party||"n/a"}`,`${x.name||""} ${x.party_full||""} ${x.office_full||""}`,new Date().toISOString(),1.5,x));
+ setStatus("fec","live","FEC ✓");return {count:(j.results||[]).length}
+}
+function family(s){if(s==="Bluesky")return"social";if(s==="Wikipedia")return"public";if(s==="GDELT")return"news";if(s==="OpenAlex"||s==="ClinicalTrials.gov")return"research";if(s==="GitHub")return"technical";if(s==="USAspending"||s==="FEC")return"institution"}
+function memoryKey(){return "signalscope_plain_snapshot_"+$("topic").value.trim().toLowerCase().replace(/\W+/g,"_").slice(0,60)}
+function buildNodes(){
+ const focus=new Set(words(focusText())),map=new Map(),prev=JSON.parse(localStorage.getItem(memoryKey())||"null");
+ S.items.forEach(it=>[...new Set(it.tokens)].filter(t=>!focus.has(t)).slice(0,18).forEach(t=>{
+  if(!map.has(t))map.set(t,{term:t,mentions:0,sources:new Set(),families:new Set()});
+  const n=map.get(t);n.mentions++;n.sources.add(it.source);n.families.add(family(it.source))
+ }));
+ S.nodes=[...map.values()].map(n=>({...n,sourceCount:n.sources.size,familyCount:n.families.size,score:n.mentions+2.4*n.families.size+1.1*n.sources.size}))
+ .filter(n=>n.mentions>=2||n.familyCount>=2).sort((a,b)=>b.score-a.score).slice(0,12);
+ S.nodes.forEach(n=>{const old=prev?.nodes?.find(x=>x.term===n.term);n.delta=old?n.score-old.score:null});
+ localStorage.setItem(memoryKey(),JSON.stringify({time:new Date().toISOString(),nodes:S.nodes.map(n=>({term:n.term,score:n.score,familyCount:n.familyCount}))}));
+ return prev
+}
+function ageDays(ts){const d=new Date(ts);return isNaN(d)?999:Math.max(0,(Date.now()-d)/86400000)}
+function feedbackBoost(it){return [...new Set(it.tokens)].reduce((a,t)=>a+(S.feedback[t]||0),0)}
+function rank(){
+ const fresh=+$("fresh").value/100,inst=+$("inst").value/100,social=+$("social").value/100,focus=new Set(words(focusText()));
+ S.items.forEach(it=>{
+  const overlap=it.tokens.filter(t=>focus.has(t)).length,rec=Math.exp(-ageDays(it.ts)/Math.max(5,45-fresh*35)),fam=family(it.source);
+  let pref=1;if(fam==="institution"||fam==="research")pref+=inst*1.4;if(fam==="social")pref+=social*1.4;
+  const nodeBonus=S.selected&&it.tokens.includes(S.selected)?1.7:0;
+  it.rank=overlap*.6+Math.log1p(it.weight||1)+rec*(1+fresh*2)+pref+nodeBonus+feedbackBoost(it)*.8
+ });
+ S.items.sort((a,b)=>b.rank-a.rank);renderItems()
+}
+function renderItems(){
+ const f=$("filter").value;
+ let a=S.items.filter(x=>(f==="all"||x.source===f)&&(!S.selected||x.tokens.includes(S.selected))).slice(0,18);
+ if(!a.length){$("evidenceGrid").innerHTML='<div class="empty">No evidence matches this filter.</div>';return}
+ $("evidenceGrid").innerHTML=a.map(it=>{
+  const vote=S.feedback["__"+it._id]||0;
+  const plainWhy=family(it.source)==="social"?"Shows current public conversation":family(it.source)==="public"?"Shows information-seeking interest":family(it.source)==="news"?"Shows recent media attention":family(it.source)==="research"?"Shows formal research or study activity":family(it.source)==="technical"?"Shows public implementation activity":"Shows official / public-record activity";
+  return `<article class="ev"><div class="evtop"><span class="sourcepill">${esc(it.source)}</span><span class="meta">relevance ${it.rank.toFixed(1)}</span></div>
+  <a class="evtitle" href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.title)}</a><div class="meta">${esc(it.meta)}</div>
+  <div class="why"><strong>Why it matters:</strong> ${plainWhy}${S.selected?` · connected to “${esc(S.selected)}”`:""}.</div>
+  <div class="feedback"><button class="iconbtn ${vote>0?"active":""}" data-v="1" data-id="${it._id}">Show me more like this</button><button class="iconbtn ${vote<0?"active":""}" data-v="-1" data-id="${it._id}">Less like this</button></div></article>`
+ }).join("");
+ document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{
+  const it=S.items.find(x=>x._id===b.dataset.id),v=+b.dataset.v,key="__"+it._id,old=S.feedback[key]||0,next=old===v?0:v,delta=next-old;
+  S.feedback[key]=next;[...new Set(it.tokens)].forEach(t=>S.feedback[t]=(S.feedback[t]||0)+delta*.18);localStorage.setItem("signalscope_feedback_plain",JSON.stringify(S.feedback));rank()
+ })
+}
+function renderGraph(){
+ const svg=$("graph"),cx=360,cy=194,a=S.nodes;let out="";
+ a.forEach((n,i)=>{const ang=2*Math.PI*i/Math.max(a.length,1)-Math.PI/2,rad=122+(i%3)*34;n.x=cx+Math.cos(ang)*rad;n.y=cy+Math.sin(ang)*rad;out+=`<line class="edge ${n.familyCount>=2?"hot":""}" x1="${cx}" y1="${cy}" x2="${n.x}" y2="${n.y}"/>`});
+ out+=`<g class="node root"><circle cx="${cx}" cy="${cy}" r="50"/><text x="${cx}" y="${cy-4}" text-anchor="middle">${esc($("topic").value.slice(0,24))}</text><text class="minor" x="${cx}" y="${cy+11}" text-anchor="middle">YOUR TOPIC</text></g>`;
+ a.forEach(n=>{const r=18+Math.min(20,n.score*1.25),arrow=n.delta==null?"new":n.delta>1?"growing":n.delta<-1?"fading":"steady";out+=`<g class="node ${S.selected===n.term?"active":""}" data-node="${esc(n.term)}"><circle cx="${n.x}" cy="${n.y}" r="${r}"/><text x="${n.x}" y="${n.y-2}" text-anchor="middle">${esc(n.term.slice(0,15))}</text><text class="minor" x="${n.x}" y="${n.y+10}" text-anchor="middle">${arrow} · ${n.familyCount} kinds</text></g>`});
+ svg.innerHTML=out;$("nodeCount").textContent=a.length?`${a.length} recurring ideas`:"";
+ svg.querySelectorAll("[data-node]").forEach(g=>g.onclick=()=>{S.selected=S.selected===g.dataset.node?null:g.dataset.node;renderGraph();renderChips();rank()})
+}
+function renderChips(){
+ $("chips").innerHTML=S.nodes.map(n=>`<button class="chip ${S.selected===n.term?"active":""}" data-chip="${esc(n.term)}">${esc(n.term)} · ${n.familyCount} source types</button>`).join("");
+ document.querySelectorAll("[data-chip]").forEach(b=>b.onclick=()=>{S.selected=S.selected===b.dataset.chip?null:b.dataset.chip;renderGraph();renderChips();rank()})
+}
+function lognorm(v,ref){return clamp(Math.log1p(Math.max(0,+v||0))/Math.log1p(ref)*100)}
+function level(v){return v>=67?["High","good"]:v>=34?["Moderate","warn"]:["Low","bad"]}
+function interpret(prev){
+ const social=lognorm(S.raw.bsky?.count,45),pub=lognorm(S.raw.wiki?.views,1e6),news=lognorm(S.raw.gdelt?.count,45);
+ const research=clamp((lognorm(S.raw.oa?.count,8000)+lognorm(S.raw.trials?.count,800))/2),tech=lognorm(S.raw.gh?.count,1000),official=lognorm((S.raw.spend?.count||0)+(S.raw.fec?.count||0),25);
+ const institution=clamp((research+tech+official)/3);
+ [["Social",social],["Public",pub],["News",news],["Institution",institution]].forEach(([k,v])=>{
+  $("bar"+k).style.width=v+"%";const [t,c]=level(v);$("level"+k).textContent=t;$("level"+k).className="level "+c
+ });
+ $("whySocial").textContent=`${S.raw.bsky?.count||0} public posts returned`;
+ $("whyPublic").textContent=S.raw.wiki?`${fmt(S.raw.wiki.views)} Wikipedia views in 30 days`:"No Wikipedia signal";
+ $("whyNews").textContent=`${S.raw.gdelt?.count||0} recent news results returned`;
+ $("whyInstitution").textContent=`Research ${Math.round(research)} · technical ${Math.round(tech)} · official ${Math.round(official)}`;
+
+ const strongest=[["public conversation",social],["public curiosity",pub],["news coverage",news],["expert/institutional activity",institution]].sort((a,b)=>b[1]-a[1]);
+ const supported=S.nodes.filter(n=>n.familyCount>=2);
+ const best=supported[0];
+ let headline,summary;
+ if(institution>=60 && Math.max(social,pub,news)<45){
+  headline="The topic looks more established than popular.";
+  summary="Expert, technical, or official activity is stronger than public attention. That often means the subject is already moving inside institutions even if it has not become a broad public story."
+ }else if(Math.max(social,pub,news)>=65 && institution<40){
+  headline="Attention appears to be running ahead of institutional action.";
+  summary="Public conversation, curiosity, or news coverage is strong, while research, technical, and official signals are weaker. That can indicate an early attention spike, controversy, or a story that has not yet translated into visible institutional activity."
+ }else if(strongest[0][1]>=60 && institution>=50){
+  headline="This topic is showing up in both attention and action.";
+  summary="Multiple kinds of public evidence are active at the same time. That is a stronger pattern than a spike confined to one source, although it still does not prove a single cause."
+ }else{
+  headline=`The clearest signal right now is ${strongest[0][0]}.`;
+  summary=`The other source families are less active or mixed. Treat this as a directional snapshot, not a verdict about how important the topic is overall.`
+ }
+ $("headline").textContent=headline;$("summaryText").textContent=summary;
+ const fams=new Set();supported.slice(0,5).forEach(n=>n.families.forEach(f=>fams.add(f)));
+ const strength=fams.size>=5?"Strong":fams.size>=3?"Moderate":"Limited";
+ $("confidenceTitle").textContent=`Evidence strength: ${strength}`;
+ $("confidenceText").textContent=best?`The strongest recurring idea is “${best.term},” supported by ${best.familyCount} different kinds of public evidence. This is not a probability score.`:"There is not yet enough cross-source support for a strong recurring theme.";
+
+ $("imp1Title").textContent=best?`Watch “${best.term}”`:"No strong shared subtopic yet";
+ $("imp1Body").textContent=best?`This idea keeps appearing across ${best.familyCount} source types. That makes it a useful place to inspect first because it is not coming from only one feed.`:"The current evidence is fragmented. A single-source spike may be real, but it has less support than a pattern repeated across independent sources.";
+ const gap=((social+pub+news)/3)-institution;
+ $("imp2Title").textContent=gap>12?"Look for institutional follow-through":gap<-12?"Look for a public-attention catch-up":"Look for changes in both attention and action";
+ $("imp2Body").textContent=gap>12?"The public side is stronger. Useful next checks are new grants, filings, trials, research, or technical projects that would show the story turning into action.":gap<-12?"Institutional activity is stronger. Watch for broader news, search interest, or public conversation to see whether the topic moves outward.":"Attention and institutional evidence are relatively balanced. Re-running this later is most useful for seeing which side moves first.";
+ $("imp3Body").textContent="These sources count different things and have different coverage. A high signal here means 'high within this source model,' not 'proven important' or 'representative of the whole population.'";
+ if(prev){
+   const now=new Map(S.nodes.map(n=>[n.term,n.score])),old=new Map((prev.nodes||[]).map(n=>[n.term,n.score]));
+   const changes=[...now].map(([k,v])=>[k,v-(old.get(k)||0)]).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+   if(changes[0]&&Math.abs(changes[0][1])>1){$("imp2Body").textContent+=` Since your last run, “${changes[0][0]}” changed the most.`}
+ }
+}
+function renderLedger(){
+ const rows=[
+ ["Bluesky",S.raw.bsky?`${S.raw.bsky.count} public posts returned`:"No observation","Current public conversation matching the query","What the whole public thinks",S.errors.bsky||"live"],
+ ["Wikipedia",S.raw.wiki?`${fmt(S.raw.wiki.views)} page views in 30 days`:"No observation","Information-seeking interest in the resolved article","Sentiment or unique-person counts",S.errors.wiki||"live"],
+ ["GDELT",S.raw.gdelt?`${S.raw.gdelt.count} recent articles returned`:"No observation","Recent news attention and framing","All news coverage everywhere",S.errors.gdelt||"live"],
+ ["OpenAlex",S.raw.oa?`${fmt(S.raw.oa.count)} recent matching works`:"No observation","Scholarly publication activity","Whether a scientific claim is true",S.errors.oa||"live"],
+ ["GitHub",S.raw.gh?`${fmt(S.raw.gh.count)} repository matches`:"No observation","Open-source implementation activity","Commercial adoption",S.errors.gh||"live"],
+ ["ClinicalTrials.gov",S.raw.trials?`${fmt(S.raw.trials.count)} registered studies`:"No observation","Registered clinical-study activity","Whether a treatment works",S.errors.trials||"live"],
+ ["USAspending",S.raw.spend?`${S.raw.spend.count} recent award rows returned`:"No observation","Federal grants/contracts matching the keyword","All public or private spending",S.errors.spend||"live"],
+ ["FEC",S.raw.fec?`${S.raw.fec.count} candidate results`:"No observation","Public federal candidate context for the entity search","A person's beliefs or voting behavior",S.errors.fec||"live"]
+ ];
+ $("ledgerRows").innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td><span class="status ${r[4]==="live"?"live":"fail"}">${esc(r[4])}</span></td></tr>`).join("")
+}
+async function run(){
+ const q=$("topic").value.trim(),entity=$("entity").value.trim();if(!q)return;
+ S.raw={};S.items=[];S.nodes=[];S.selected=null;S.errors={};$("statuses").innerHTML="";prog(4);
+ const plan=[
+  ["bsky",$("useBsky").checked,()=>bluesky(q)],
+  ["wiki",$("useWiki").checked,()=>wiki(q)],
+  ["gdelt",$("useGdelt").checked,()=>gdelt(q)],
+  ["oa",$("useOpenAlex").checked,()=>openalex(q)],
+  ["gh",$("useGithub").checked,()=>github(q)],
+  ["trials",$("useTrials").checked,()=>trials(q)],
+  ["spend",$("useSpend").checked,()=>spending(q)],
+  ["fec",$("useFec").checked,()=>fec(entity)]
+ ].filter(x=>x[1]);
+ let done=0;
+ await Promise.all(plan.map(async([k,_x,fn])=>{try{S.raw[k]=await fn()}catch(err){S.errors[k]="unavailable";setStatus(k==="oa"?"oa":k==="gh"?"gh":k==="trials"?"ct":k==="spend"?"sp":k,"fail",`${k} unavailable`);console.warn(k,err)}done++;prog(6+84*done/Math.max(plan.length,1))}));
+ const prev=buildNodes();rank();renderGraph();renderChips();interpret(prev);renderLedger();
+ $("mBsky").textContent=S.raw.bsky?fmt(S.raw.bsky.count):"—";$("mWiki").textContent=S.raw.wiki?fmt(S.raw.wiki.views):"—";$("mNews").textContent=S.raw.gdelt?fmt(S.raw.gdelt.count):"—";$("mOA").textContent=S.raw.oa?fmt(S.raw.oa.count):"—";$("mGH").textContent=S.raw.gh?fmt(S.raw.gh.count):"—";$("mInst").textContent=fmt((S.raw.spend?.count||0)+(S.raw.fec?.count||0)+(S.raw.trials?.count||0));
+ $("stamp").textContent=`Updated ${new Date().toLocaleString()} · ${S.items.length} pieces of evidence collected · ${Object.keys(S.errors).length} source${Object.keys(S.errors).length===1?"":"s"} unavailable`;
+ prog(100);setTimeout(()=>prog(0),900)
+}
+$("run").onclick=run;$("runTop").onclick=run;$("topic").addEventListener("keydown",e=>{if(e.key==="Enter")run()});
+document.querySelectorAll(".example").forEach(b=>b.onclick=()=>{$("topic").value=b.dataset.topic;$("entity").value=b.dataset.entity;run()});
+["fresh","inst","social"].forEach(id=>$(id).oninput=e=>{$(id+"Val").textContent=e.target.value+"%";if(S.items.length)rank()});
+$("filter").onchange=renderItems;
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".pane").forEach(x=>x.classList.remove("active"));b.classList.add("active");$(b.dataset.pane).classList.add("active")});
+run();
+</script>
+</body>
+</html>
